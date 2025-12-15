@@ -16,9 +16,7 @@ PRODUCTS_TOPIC = os.getenv("PRODUCTS_TOPIC")
 ENRICHED_ORDERS_TOPIC = os.getenv("ENRICHED_ORDERS_TOPIC")
 PRODUCT_COUNTS_TOPIC = os.getenv("PRODUCT_COUNTS_TOPIC")
 WINDOW_MINUTES = int(os.getenv("WINDOW_MINUTES", 5))
-CSV_TOPIC_NAME = os.getenv("CSV_TOPIC_NAME")
 JARS_FILE_PATH = os.getenv("JARS_FILE_PATH")
-CSV_PATH = os.getenv("CSV_PATH")
 POSTGRES_HOST = os.getenv("POSTGRES_HOST")
 POSTGRES_USERNAME = os.getenv("POSTGRES_USERNAME")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
@@ -26,10 +24,15 @@ POSTGRES_DATABASE = os.getenv("POSTGRES_DATABASE")
 POSTGRES_SCHEMA = os.getenv("POSTGRES_SCHEMA")
 POSTGRES_TABLE = os.getenv("POSTGRES_TABLE")
 
+CURRENT_WORKING_DIRECTORY = os.getcwd()
+CSV_PATH = f"{CURRENT_WORKING_DIRECTORY}/{'csv_files'}"
+os.makedirs('csv_files', exist_ok=True)
+
 
 def get_jar_dependencies():
     files = os.listdir(JARS_FILE_PATH)
-    jars = [f"file://{JARS_FILE_PATH}/{file}"
+    # print(f"JARS List : {files}")
+    jars = [f"file://{CURRENT_WORKING_DIRECTORY}/{JARS_FILE_PATH}/{file}"
             for file in files if file.endswith(".jar")]
     return ";".join(jars)
 
