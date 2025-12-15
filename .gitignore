@@ -15,3 +15,4 @@ jars/
 temp_csv/
 .env_copy
 maven/target/
+.env*
