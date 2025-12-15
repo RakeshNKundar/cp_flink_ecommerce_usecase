@@ -1,34 +1,36 @@
 # E-commerce use case with Apache Flink 
 
 ## Overview
-This repo walks you through an e-commerce use case, enriching real-time order and products streams, performing windowed aggregation to count every products order count per window interval with Open Source Flink. This repo will give you step by step guide on how to run this use case end-to-end.
+This repo walks you through an e-commerce use case, enriching real-time orders and products streams, performing windowed aggregation to count every products order count per window interval with Open Source Flink. This repo will give you step by step guide on how to run this use case end-to-end.
 
-## Prerequisites
+## Technologies Used
 - Kafka & Schema Registry clusters
 - Python
 - Open Source Flink
 - Java 11
 - Maven
+- Postgres DB
 
 ## Architecture
 
 ![Architecture Diagram](assets/architecture_diagram_with_background.png)
 
 This architecure involves:
-- Reading `Order` CSV files from a local folder and stream rows as new events to Kafka topic using Flink FileStream Connector.
+- Reading `Order` CSV files from a local folder and stream rows as new events to a Kafka topic using Flink's FileSystem Connector.
 - Streaming CDC changes from `Product` table on the Postgres Database to a Kafka topic using Flink Postgres CDC connector.
-- Materializes Product table.
-- Orders and Products tables are joined using Flink's Temporal Join to enrich in real-time.
+- Materializes Product table using a Primary key.
+- Orders and Products tables are joined using Flink's Temporal Join to enrich orders in real-time.
 - Perform Windowed aggregation to count each product's order for every window interval.
 
 ## Requirements
 - Access
-  - Kafka and Schema Registry clusters</br>
+  - Kafka and Schema Registry clusters</br></br>
     There are different ways in which you can spin up a Kafka cluster.
     - Confluent Cloud Account Access - https://cnfl.io/getstarted
     - Confluent Platform with Kubernetes setup - https://docs.confluent.io/operator/current/co-deploy-cfk.html</br>
     Once the Kafka cluster is up and running create topics named `products`, `products_materialized`, `orders`, `enriched_orders` and `product_window_counts` with `1` partition. 
-  - Postgres Database 
+  - Postgres Database </br></br>
+    You can create a managed postgres DB on AWS RDS with public facing endpoints. Makes sure you enable `replication_factor=1` in the database parameter group while creating the DB for CDC connector to stream events from the transaction logs. 
 
 - Local Software Requirements:
   - [Python UV package manager](https://pypi.org/project/uv/)
@@ -44,7 +46,7 @@ git clone https://github.com/RakeshNKundar/cp_flink_ecommerce_usecase.git
 ## Quick Start
 
 ### Step 1: Download and Install Apache Flink software
-  Download the Apache Flink software by following the link on the Requirements section. This will download the software to your local machine. Untar the file and add the `bin/` folder to your system `PATH` variable to run flink command. You can follow the below command if you are using MAC device.
+  Download the Apache Flink software by following the link on the [Local software in Requirements section](#Requirements). This will download the software to your local machine. Untar the file and add the `bin/` folder to your system `PATH` variable to run flink command. You can follow the below command if you are using a MAC device.
 
   ```
   sudo vi ~/.zshrc
@@ -62,8 +64,8 @@ git clone https://github.com/RakeshNKundar/cp_flink_ecommerce_usecase.git
   Version: 1.20.3, Commit ID: 01e3a6d
   ```
 
-### Step 2: Create a Postgres DB and create products table.
-You can create a managed postgres DB on AWS RDS with public facing endpoints. Makes sure you enable `replication_factor=1` in the database parameter group while creating the DB for CDC connector to stream events from the transaction logs. Once created run the below command to create a `product` table under `postgres` database and `public` schema. 
+### Step 2: Create products table on the Postgres DB.
+Run the below command to create a `product` table under `postgres` database and `public` schema. 
 
 ```
 create table products(
@@ -75,23 +77,19 @@ last_updated_ts TIMESTAMP(3)
 ```
 
 
-### Step 3: Setup the .env file and generate Flink dependency JARS.
-Go to the directory where you have cloned this Github repo. Follow the instructions to setup the working directory to make it ready for Flink deployment.
+### Step 3: Setup the .env file and download Flink dependency JARS.
+Go to the directory where you have cloned this Github repo. Follow the instructions to setup the working directory to make it ready for a deployment.
 
-To download the python dependency library, RUN the below command. This will create a python virtual environment and install all the dependent python libraries.
+To download the python dependency library, execute the below commands. This will create a python virtual environment and install all the dependent python libraries.
 ```
 uv sync
 
 # Activate the virtual environment
 source .venv/bin/activate
 
-# Create directories to write CSV Zip and extracted files
-mkdir csv_files
-chmod 777 csv_files
-
 ```
 
-In the `.env` file, pass in the values for `Kafka`, `Schema Registry` and `Postgres DB` endpoints and credentials for the Flink job and internal scripts to write events. Only update the below variables on the `.env` file.
+In the `.env` file, pass in the values for `Kafka`, `Schema Registry` and `Postgres DB` endpoints and credentials for the Flink job and python scripts to write events. Only update the below variables in the `.env` file.
 ```
 SCHEMA_REGISTRY_URL=<SCHEMA_REGISTRY_ENDPOINT>
 KAFKA_BOOTSTRAP_SERVERS=<KAFKA_BOOTSTRAP_SERVER_ADDRESSS>
@@ -102,10 +100,10 @@ POSTGRES_DATABASE=<POSTGRES_DATABASE_NAME>
 POSTGRES_SCHEMA=<POSTGRES_DATABASE_SCHEMA>
 ``` 
 
-Flink job requires certain JAR files to execute which has be downloaded upfront and is passed during the compile time. We will use `MAVEN` to download these JARS without any hassle. Make sure you have `MAVEN` installed on your machine and follow the below commands
+Flink job requires some dependency JAR files to execute which has to be downloaded upfront and is passed during the compile time. We will use `MAVEN` to download these JARS without any hassle. Make sure you have `MAVEN` installed on your machine and follow the below commands
 
 ```
-# Change to the maven Directory
+# Change to the maven Directory inside your working directory
 cd maven
 
 # Run the maven command to install JAR files
@@ -113,7 +111,7 @@ mvn clean package
 ```
 
 ### Step 4: Start a local Flink cluster
-Before running a Flink Job, you need to start a local Flink cluster on your laptop/VM. You can run a standalone Flink cluster with `1` task slot which can be used for simple Flink job.
+Before running a Flink Job, you need to start a local Flink cluster on your laptop/VM. You can run a standalone Flink cluster with `1` task slot which can be used for simple Flink job by following the below commands
 
 ```
 # Navigate to the directory where Flink 1.20.3 is downloaded
@@ -122,14 +120,14 @@ cd <ABSOLUTE_PATH_WHERE_FLINK_IS_DOWNLOADED>/flink-1.20.3/bin
 # Run the below command to start a Flink cluster
 ./start-cluster.sh
 ```
-This will start a standalone deamon cluster on your localhost machine.
+This will start a standalone deamon flink cluster on your localhost machine.
 
 On your browser type the URL `http://localhost:8081/#/overview` to view the Flink Web Dashboard. You should see something similart to the below image.
 
 ![Flink Web Image](assets/flink_web_ss.png)
 
 ### Step 5: Submit a Flink Job to the local Flink cluster
-So, We have our Flink standalone cluster running, The next step is to compile your Flink job and submit it to the Flink cluster. We will use the `flink` CLI to perform this operation.
+So, We have our Flink standalone cluster running now, The next step is to compile your Flink job and submit it to the Flink cluster. We will use the `flink` CLI to perform this operation.
 
 ```
 flink run -py postgres_cdc_flink_job.py
