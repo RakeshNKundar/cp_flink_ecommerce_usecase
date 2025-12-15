@@ -1,0 +1,25 @@
+[project]
+name = "telefonica-demo-flink"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = "==3.11.13"
+dependencies = [
+    "apache-flink==1.20.3",
+    "authlib>=1.6.5",
+    "cachetools>=6.2.2",
+    "confluent-kafka>=2.12.2",
+    "faker>=38.0.0",
+    "faker-commerce>=1.0.4",
+    "fastavro>=1.12.1",
+    "httpx>=0.28.1",
+    "pytest>=9.0.1",
+    "python-dotenv>=1.2.1",
+    "requests>=2.32.5",
+    "urllib3>=2.5.0",
+    "psycopg2-binary",
+    "attrs",
+    "referencing",
+    "jsonschema",
+    "watchdog"
+]

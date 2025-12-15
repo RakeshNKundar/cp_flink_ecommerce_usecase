@@ -1,0 +1,43 @@
+{
+  "apiVersion": "cmf.confluent.io/v1",
+  "kind": "FlinkApplication",
+  "metadata": {
+    "name": "telefonica-flink-demo",
+    "namespace": "confluent"
+  },
+  "spec": {
+    "image": "17090974127/telefonica-flink-demo:27.0",
+    "flinkVersion": "v2_0",
+    "flinkConfiguration": {
+      "metrics.reporter.prom.factory.class": "org.apache.flink.metrics.prometheus.PrometheusReporterFactory",
+      "metrics.reporter.prom.port": "9249-9250",
+      "taskmanager.numberOfTaskSlots": "1"
+    },
+    "serviceAccount": "flink",
+    "jobManager": {
+      "resource": {
+        "cpu": 1,
+        "memory": "1024m"
+      }
+    },
+    "taskManager": {
+      "resource": {
+        "cpu": 1,
+        "memory": "1024m"
+      }
+    },
+    "job": {
+      "jarURI": "local:///opt/flink/opt/flink-python_2.12-1.16.1.jar",
+      "state": "running",
+      "parallelism": 1,
+      "upgradeMode": "stateless",
+      "entryClass": "org.apache.flink.client.python.PythonDriver",
+      "args": [
+        "-pyclientexec",
+        "/opt/flink/pyflink/.venv/bin/python3",
+        "-py",
+        "/opt/flink/pyflink/flink_job.py"
+      ]
+    }
+  }
+}
