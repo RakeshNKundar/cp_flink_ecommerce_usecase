@@ -1,14 +1,12 @@
 # E-commerce use case with Apache Flink 
 
 ## Overview
-This repo walks you through an e-commerce use case, enriching real-time order and products streams, performing windowed aggregation to count every products order count per window interval with Open Source Flink. This repo with gives you step by step guide to run this use case end-to-end.
+This repo walks you through an e-commerce use case, enriching real-time order and products streams, performing windowed aggregation to count every products order count per window interval with Open Source Flink. This repo with give you step by step guide to run this use case end-to-end.
 
 ## Prerequisites
 - Kafka & Schema Registry clusters
 - Python
 - Open Source Flink
-- Java
-- Maven
 
 ## Architecture
 
@@ -37,7 +35,7 @@ This architecure involves:
 
 Clone this repository to your local machine
 ```
-git clone https://github.com/RakeshNKundar/cp_flink_ecommerce_usecase.git
+git clone <REPO_URL>
 ```
 
 ## Quick Start
